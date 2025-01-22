@@ -9,6 +9,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
             height: 100vh;
             background-color: black;
             margin: 0;
@@ -24,9 +25,10 @@
 
         #snake-game {
             background-color: #333;
-            width: 300px; /* Largura fixa do jogo */
-            height: 300px; /* Altura fixa do jogo */
-            border: 1px solid #fff; /* borda branca */
+            width: 300px;
+            height: 300px;
+            border: 1px solid #fff;
+            position: relative;
         }
 
         #score {
@@ -43,26 +45,52 @@
             border: 2px solid #4CAF50;
             padding: 20px;
             width: 300px;
-            box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.75);
+            box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
         }
 
-        .ticket-text {
-            font-size: 16px;
-            line-height: 1.6;
-            margin-bottom: 10px;
-            color: #4CAF50; /* Cor do texto "VALE BEIJO E CARINHOS:" */
+        .controls {
+            display: grid;
+            grid-template-areas:
+                ". up ."
+                "left . right"
+                ". down .";
+            gap: 10px;
+            margin-top: 20px;
         }
 
-        .ticket-text span {
+        .control-button {
+            width: 50px;
+            height: 50px;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 18px;
             font-weight: bold;
-            color: #4CAF50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
         }
 
-        .ticket-text small {
-            display: block;
-            margin-top: 10px;
-            font-size: 12px;
-            color: #4CAF50; /* Cor do texto "Quando quiser resgatar seu prêmio só me apresentar esse cupom" */
+        .control-button:active {
+            background-color: #388E3C;
+        }
+
+        .controls .up {
+            grid-area: up;
+        }
+
+        .controls .down {
+            grid-area: down;
+        }
+
+        .controls .left {
+            grid-area: left;
+        }
+
+        .controls .right {
+            grid-area: right;
         }
     </style>
 </head>
@@ -71,14 +99,15 @@
         <div id="snake-game"></div>
         <div id="score">Score: <span id="score-number">0</span></div>
         <div id="victory-message">
-            <div class="ticket-text">
-                <p>Parabéns! Você venceu!</p>
-                <p><span>VALE BEIJO E CARINHOS:</span></p>
-                <p>Quando quiser resgatar seu prêmio só me apresentar esse cupom</p>
-                <small>*Usos Ilimitados e Validade Eterna*</small>
-            </div>
+            <p>Parabéns! Você venceu!</p>
         </div>
         <button id="start-button">Start</button>
+        <div class="controls">
+            <button class="control-button up">↑</button>
+            <button class="control-button left">←</button>
+            <button class="control-button right">→</button>
+            <button class="control-button down">↓</button>
+        </div>
     </div>
 
     <script>
@@ -87,6 +116,7 @@
             const scoreDisplay = document.getElementById('score-number');
             const startButton = document.getElementById('start-button');
             const victoryMessage = document.getElementById('victory-message');
+            const controls = document.querySelectorAll('.control-button');
 
             const gridSize = 15;
             const tileSize = 20;
@@ -116,11 +146,7 @@
 
                 // Draw snake
                 snake.forEach((segment, index) => {
-                    if (index === 0) {
-                        ctx.fillStyle = '#22741C'; // Cor mais escura para a cabeça da cobrinha
-                    } else {
-                        ctx.fillStyle = '#39ff14'; // Cor mais clara para o corpo da cobrinha
-                    }
+                    ctx.fillStyle = index === 0 ? '#22741C' : '#39ff14';
                     ctx.fillRect(segment.x * tileSize, segment.y * tileSize, tileSize, tileSize);
                 });
 
@@ -128,41 +154,30 @@
                 ctx.fillStyle = 'red';
                 ctx.fillRect(apple.x * tileSize, apple.y * tileSize, tileSize, tileSize);
 
-                // Draw score
                 scoreDisplay.textContent = score;
             }
 
             function updateGame() {
                 const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
 
-                // Check collision with walls or itself
                 if (head.x < 0 || head.x >= gridSize || head.y < 0 || head.y >= gridSize || snake.slice(1).some(segment => segment.x === head.x && segment.y === head.y)) {
                     gameOver();
                     return;
                 }
 
-                // Check if apple is eaten
                 if (head.x === apple.x && head.y === apple.y) {
                     score++;
-                    snake.unshift({ ...head }); // Add new head instead of popping the tail
+                    snake.unshift({ ...head });
                     generateNewApple();
                 } else {
                     snake.unshift({ ...head });
-                    snake.pop(); // Remove tail segment
+                    snake.pop();
                 }
 
                 drawGame();
-
-                // Check if score is 5 for victory
-                if (score === 999999999999999) {
-                    gameRunning = false;
-                    clearInterval(gameInterval);
-                    victoryMessage.style.display = 'block';
-                }
             }
 
             function generateNewApple() {
-                // Ensure the new apple is not placed on the snake
                 do {
                     apple = { x: Math.floor(Math.random() * gridSize), y: Math.floor(Math.random() * gridSize) };
                 } while (snake.some(segment => segment.x === apple.x && segment.y === apple.y));
@@ -197,37 +212,38 @@
 
                 switch (event.key) {
                     case 'ArrowUp':
-                        if (direction.y === 0) {
-                            direction = { x: 0, y: -1 };
-                        }
+                        if (direction.y === 0) direction = { x: 0, y: -1 };
                         break;
                     case 'ArrowDown':
-                        if (direction.y === 0) {
-                            direction = { x: 0, y: 1 };
-                        }
+                        if (direction.y === 0) direction = { x: 0, y: 1 };
                         break;
                     case 'ArrowLeft':
-                        if (direction.x === 0) {
-                            direction = { x: -1, y: 0 };
-                        }
+                        if (direction.x === 0) direction = { x: -1, y: 0 };
                         break;
                     case 'ArrowRight':
-                        if (direction.x === 0) {
-                            direction = { x: 1, y: 0 };
-                        }
+                        if (direction.x === 0) direction = { x: 1, y: 0 };
                         break;
                 }
+            });
+
+            controls.forEach(button => {
+                button.addEventListener('click', () => {
+                    if (!gameRunning) return;
+
+                    const classList = button.classList;
+                    if (classList.contains('up') && direction.y === 0) direction = { x: 0, y: -1 };
+                    if (classList.contains('down') && direction.y === 0) direction = { x: 0, y: 1 };
+                    if (classList.contains('left') && direction.x === 0) direction = { x: -1, y: 0 };
+                    if (classList.contains('right') && direction.x === 0) direction = { x: 1, y: 0 };
+                });
             });
 
             startButton.addEventListener('click', () => {
-                if (!gameRunning) {
-                    startGame();
-                }
+                if (!gameRunning) startGame();
             });
 
-            resetGame(); // Initialize game
-
-            drawGame(); // Draw initial state
+            resetGame();
+            drawGame();
         });
     </script>
 </body>
